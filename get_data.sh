@@ -1,0 +1,1 @@
+python historical_data_collect.py --symbols=UPAR,AAPL,SINT,THC,GLD,AAPL,ADBE --date=2023-04-04 --start=12-00-00 --end=12-59-59
