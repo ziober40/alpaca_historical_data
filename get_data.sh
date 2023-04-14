@@ -1,1 +1,1 @@
-python historical_data_collect.py --symbols=AAPL --date=2023-04-04 --start=7-00-00 --end=19-59-59
+python historical_data_collect.py --symbols=AAPL --start=2023-03-01_00-00-00 --end=2023-03-31_23-59-59 --split_dates --data get_quotes,get_trades,get_bars

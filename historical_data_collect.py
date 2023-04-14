@@ -1,10 +1,11 @@
 from alpaca.data import StockHistoricalDataClient
-from alpaca.data.requests import StockLatestQuoteRequest
 from alpaca.data.requests import StockQuotesRequest
 from alpaca.data.requests import StockTradesRequest
 from alpaca.data.requests import StockBarsRequest
-
 from alpaca.data.timeframe import TimeFrame
+
+from pandas_market_calendars import get_calendar
+
 from datetime import datetime
 import pandas as pd
 
@@ -60,31 +61,64 @@ def get_ta(client={}, date_start_str="", date_end_str="", symbols=[]):
     df.drop(columns=bars_columns+["trade_count","vwap"], inplace=True)
     return df
 
+def split_dates(date_start_str, date_end_str):
+    start_date = datetime.strptime(date_start_str, '%Y-%m-%d_%H-%M-%S')
+    end_date = datetime.strptime(date_end_str, '%Y-%m-%d_%H-%M-%S')
+
+    nyse = get_calendar('NYSE')
+    schedule = nyse.schedule(start_date=start_date, end_date=end_date)
+
+    dates = schedule.index.strftime('%Y-%m-%d')
+
+    return dates
+
+def factory(func_name):
+    if(func_name == "get_bars"):
+        return get_bars
+    elif(func_name == "get_trades"):
+        return get_trades
+    elif(func_name == "get_quotes"):
+        return get_quotes
+    elif(func_name == "get_ta"):
+        return get_ta
+    else:
+        return
+
+def execute_calls(data_functions,date_start_str,date_end_str):
+    for f in data_functions:
+        output = factory(f)(client,date_start_str,date_end_str,symbols)
+        for symbol in symbols:
+            directory_path = f'data/{date_start_str}-{date_end_str}/{f}'
+            if not os.path.exists(directory_path):
+                os.makedirs(directory_path)
+            output[output["symbol"] == symbol].to_csv(f'{directory_path}/{f}-{symbol}.csv')
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--symbols', type=str, default='AAPL', help='symbol you want to get data for')
-    parser.add_argument('--date', type=str, default='2023-04-04', help='date you want to get data for')
-    parser.add_argument('--start', type=str, default='12-00-00', help='start time you want to get data for')
-    parser.add_argument('--end', type=str, default='12-59-59', help='end time you want to get data for')
+    parser.add_argument('--start', type=str, default='2023-03-01_12-00-00', help='start time you want to get data for')
+    parser.add_argument('--end', type=str, default='2023-03-31_12-59-59', help='end time you want to get data for')
+    parser.add_argument('--data', type=str, default='get_bars,get_ta', help='provide the comma limited function names: get_bars, get_trades, get_quotes, get_ta')
+    parser.add_argument('--split_dates', action='store_true', help='split dates')
     args = parser.parse_args()
 
     api_key_id = os.environ['ALPACA_API_KEY']
     api_key_secret = os.environ['ALPACA_API_SECRET']
     client = StockHistoricalDataClient(api_key_id, api_key_secret)
 
-    date_start_str = f"{args.date}_{args.start}"
-    date_end_str = f"{args.date}_{args.end}"
+    split_date = args.split_dates
+
+    date_start_str = f"{args.start}"
+    date_end_str = f"{args.end}"
     symbols = args.symbols.split(',')
-    
-    # get_ta it has to be triggered always after get_bars
-    #data_functions = [get_quotes,get_trades,get_bars,get_ta]
-    data_functions = [get_bars,get_ta]
-    for f in tqdm(data_functions):
-        output = f(client,date_start_str,date_end_str,symbols)
-        for symbol in symbols:
-            directory_path = f'data/{date_start_str}-{date_end_str}/{f.__name__}'
-            if not os.path.exists(directory_path):
-                os.makedirs(directory_path)
-            output[output["symbol"] == symbol].to_csv(f'{directory_path}/{f.__name__}-{symbol}.csv')
+    data_functions = args.data.split(',')
+
+    split_date = True
+    if(split_date):
+        dates = split_dates(date_start_str, date_end_str)
+        for date in tqdm(dates):
+            execute_calls(data_functions, date+"_12-00-00",date+"_12-59-59")
+    else:
+        execute_calls(data_functions,date_start_str,date_end_str)
 
 
