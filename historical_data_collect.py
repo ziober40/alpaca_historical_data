@@ -13,6 +13,7 @@ import os
 
 from tqdm import tqdm
 
+import ta
 
 def get_bars(client, date_start_str, date_end_str, symbols):
 
@@ -47,12 +48,24 @@ def get_quotes(client, date_start_str, date_end_str, symbols):
 
     return multisymbol_quotes.df.reset_index()
 
+def get_ta(client={}, date_start_str="", date_end_str="", symbols=[]):
+    for symbol in symbols:
+        #TODO: check if file exist, if not generate it
+        df = pd.read_csv(f"data/{date_start_str}-{date_end_str}/get_bars/get_bars-{symbol}.csv")
+        df = ta.utils.dropna(df)
+        bars_columns = ["open", "high", "low", "close","volume"]
+        df = ta.add_all_ta_features(
+            df, bars_columns[0], bars_columns[1], bars_columns[2], bars_columns[3], bars_columns[4], fillna=True
+        )
+    df.drop(columns=bars_columns+["trade_count","vwap"], inplace=True)
+    return df
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--symbols', type=str, default='GLD,AAPL,ADBE', help='symbol you want to get data for')
+    parser.add_argument('--symbols', type=str, default='AAPL', help='symbol you want to get data for')
     parser.add_argument('--date', type=str, default='2023-04-04', help='date you want to get data for')
     parser.add_argument('--start', type=str, default='12-00-00', help='start time you want to get data for')
-    parser.add_argument('--end', type=str, default='12-59-00', help='end time you want to get data for')
+    parser.add_argument('--end', type=str, default='12-59-59', help='end time you want to get data for')
     args = parser.parse_args()
 
     api_key_id = os.environ['ALPACA_API_KEY']
@@ -63,11 +76,15 @@ if __name__ == '__main__':
     date_end_str = f"{args.date}_{args.end}"
     symbols = args.symbols.split(',')
     
-    data_functions = [get_quotes,get_trades,get_bars]
-    
+    # get_ta it has to be triggered always after get_bars
+    #data_functions = [get_quotes,get_trades,get_bars,get_ta]
+    data_functions = [get_bars,get_ta]
     for f in tqdm(data_functions):
         output = f(client,date_start_str,date_end_str,symbols)
         for symbol in symbols:
-            output[output["symbol"] == symbol].to_csv(f'data/{f.__name__}/{f.__name__}-{symbol}-{date_start_str}-{date_end_str}.csv')
+            directory_path = f'data/{date_start_str}-{date_end_str}/{f.__name__}'
+            if not os.path.exists(directory_path):
+                os.makedirs(directory_path)
+            output[output["symbol"] == symbol].to_csv(f'{directory_path}/{f.__name__}-{symbol}.csv')
 
 
