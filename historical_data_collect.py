@@ -84,21 +84,33 @@ def factory(func_name):
     else:
         return
 
-def execute_calls(data_functions,date_start_str,date_end_str):
+def execute_calls(client,symbols, data_functions, date_start_str, date_end_str):
     for f in data_functions:
-        output = factory(f)(client,date_start_str,date_end_str,symbols)
-        for symbol in symbols:
-            directory_path = f'data/{date_start_str}-{date_end_str}/{f}'
-            if not os.path.exists(directory_path):
-                os.makedirs(directory_path)
-            output[output["symbol"] == symbol].to_csv(f'{directory_path}/{f}-{symbol}.csv')
+        try:
+            output = factory(f)(client,date_start_str,date_end_str,symbols)
+            for symbol in symbols:
+                directory_path = f'data/{date_start_str}-{date_end_str}/{f}'
+                if not os.path.exists(directory_path):
+                    os.makedirs(directory_path)
+                output[output["symbol"] == symbol].to_csv(f'{directory_path}/{f}-{symbol}.csv')
+        except Exception as e:
+            print(e)
+
+def run_all(client, data_functions, date_start_str, date_end_str):
+    chunk = 5
+    df = pd.read_csv('iex_tradeable_symbols_subset_random_1000.csv')
+    dates = split_dates(date_start_str, date_end_str)    
+    for i in tqdm(range(0, len(df), chunk)):
+        symbols = df.iloc[i:i+chunk].Symbol.values.tolist()
+        for date in tqdm(dates):
+            execute_calls(client, symbols, data_functions, date+"_00-00-00",date+"_23-59-59")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--symbols', type=str, default='AAPL', help='symbol you want to get data for')
-    parser.add_argument('--start', type=str, default='2023-03-01_12-00-00', help='start time you want to get data for')
-    parser.add_argument('--end', type=str, default='2023-03-31_12-59-59', help='end time you want to get data for')
-    parser.add_argument('--data', type=str, default='get_bars,get_ta', help='provide the comma limited function names: get_bars, get_trades, get_quotes, get_ta')
+    parser.add_argument('--symbols', type=str, default='SAMPLE', help='symbol you want to get data for')
+    parser.add_argument('--start', type=str, default='2023-03-01_00-00-00', help='start time you want to get data for')
+    parser.add_argument('--end', type=str, default='2023-03-31_23-59-59', help='end time you want to get data for')
+    parser.add_argument('--data', type=str, default='get_bars', help='provide the comma limited function names: get_bars, get_trades, get_quotes, get_ta')
     parser.add_argument('--split_dates', action='store_true', help='split dates')
     args = parser.parse_args()
 
@@ -113,12 +125,15 @@ if __name__ == '__main__':
     symbols = args.symbols.split(',')
     data_functions = args.data.split(',')
 
-    split_date = True
-    if(split_date):
-        dates = split_dates(date_start_str, date_end_str)
-        for date in tqdm(dates):
-            execute_calls(data_functions, date+"_12-00-00",date+"_12-59-59")
+    if(symbols[0]=="SAMPLE"):
+        run_all(client, data_functions, date_start_str, date_end_str)
     else:
-        execute_calls(data_functions,date_start_str,date_end_str)
+        split_date = True
+        if(split_date):
+            dates = split_dates(date_start_str, date_end_str)
+            for date in tqdm(dates):
+                execute_calls(client, symbols, data_functions, date+"_00-00-00",date+"_23-59-59")
+        else:
+            execute_calls(client, symbols, data_functions,date_start_str,date_end_str)
 
 
