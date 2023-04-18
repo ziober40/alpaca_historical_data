@@ -1,5 +1,3 @@
-python historical_data_collect.py --symbols=YSBPW --start=2020-03-01_00-00-00 --end=2023-04-16_23-59-59 --split_dates --data get_quotes,get_trades,get_bars
-python historical_data_collect.py --symbols=OILU --start=2020-03-01_00-00-00 --end=2023-04-16_23-59-59 --split_dates --data get_quotes,get_trades,get_bars
 python historical_data_collect.py --symbols=AJG --start=2020-03-01_00-00-00 --end=2023-04-16_23-59-59 --split_dates --data get_quotes,get_trades,get_bars
 python historical_data_collect.py --symbols=CITEW --start=2020-03-01_00-00-00 --end=2023-04-16_23-59-59 --split_dates --data get_quotes,get_trades,get_bars
 python historical_data_collect.py --symbols=RTX --start=2020-03-01_00-00-00 --end=2023-04-16_23-59-59 --split_dates --data get_quotes,get_trades,get_bars
