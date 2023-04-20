@@ -57,8 +57,8 @@ if __name__ == '__main__':
     parser.add_argument('--end_date', type=str, default='2023-04-16_23-59-59', help='end')
     parser.add_argument('--symbol', type=str, default='EURN', help='symbol')
     parser.add_argument('--data_path', type=str, default='/home/wolfie/Source/alpaca_historical_data/data/', help='path to data store')
-    parser.add_argument('--truncate_start', type=str, default='13:00:00', help='start')
-    parser.add_argument('--truncate_end', type=str, default='21:00:00', help='end')
+    parser.add_argument('--truncate_start', type=str, default='13:30:00', help='start')
+    parser.add_argument('--truncate_end', type=str, default='20:00:00', help='end')
     args = parser.parse_args()
 
     pivot_close(args.data_path, args.start_date, args.end_date,args.symbol, args.truncate_start, args.truncate_end)
