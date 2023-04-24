@@ -1,0 +1,8 @@
+Service,Fee,Executions at or above 1.00,Executions below $1.00
+MI,Add non-displayed liquidity,0.0010,0.10% of TDV
+ML,Add displayed liquidity,FREE,FREE
+TI,Remove non-displayed liquidity,0.0010,0.10% of TDV
+TL,Remove displayed liquidity,0.0009,0.09% of TDV
+X,Opening Process for Non-Listed Securities ("Opening Process"),0.0010,0.10% of TDV
+O;C;H;P,Auction Match Fee,0.0003,0.30% of TDV
+Alpha,Routing and removing liquidity (all routing options),0.0001
