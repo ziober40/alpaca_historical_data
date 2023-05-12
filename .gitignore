@@ -1,5 +1,6 @@
 data/
 .vscode/
-
+build/
 *.pyc
 .DS_Store
+ta.egg-info/
